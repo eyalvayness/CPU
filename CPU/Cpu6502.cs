@@ -48,47 +48,47 @@ namespace CPU
 
             switch (instruction)
             {
-                case Cpu6502ByteCodesIntructions.LDA_IMMEDIATE:
-                case Cpu6502ByteCodesIntructions.LDA_ZEROPAGE:
-                case Cpu6502ByteCodesIntructions.LDA_ZEROPAGE_X:
-                case Cpu6502ByteCodesIntructions.LDA_ABSOLUTE:
-                case Cpu6502ByteCodesIntructions.LDA_ABSOLUTE_X:
-                case Cpu6502ByteCodesIntructions.LDA_ABSOLUTE_Y:
-                case Cpu6502ByteCodesIntructions.LDA_INDERECT_X:
-                case Cpu6502ByteCodesIntructions.LDA_INDERECT_Y:
+                case Cpu6502ByteCodesInstructions.LDA_IMMEDIATE:
+                case Cpu6502ByteCodesInstructions.LDA_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.LDA_ZEROPAGE_X:
+                case Cpu6502ByteCodesInstructions.LDA_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_Y:
+                case Cpu6502ByteCodesInstructions.LDA_INDERECT_X:
+                case Cpu6502ByteCodesInstructions.LDA_INDERECT_Y:
                     LDA(instruction);
                     break;
-                case Cpu6502ByteCodesIntructions.LDX_IMMEDIATE:
-                case Cpu6502ByteCodesIntructions.LDX_ZEROPAGE:
-                case Cpu6502ByteCodesIntructions.LDX_ZEROPAGE_Y:
-                case Cpu6502ByteCodesIntructions.LDX_ABSOLUTE:
-                case Cpu6502ByteCodesIntructions.LDX_ABSOLUTE_Y:
+                case Cpu6502ByteCodesInstructions.LDX_IMMEDIATE:
+                case Cpu6502ByteCodesInstructions.LDX_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.LDX_ZEROPAGE_Y:
+                case Cpu6502ByteCodesInstructions.LDX_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.LDX_ABSOLUTE_Y:
                     LDX(instruction);           
                     break;
-                case Cpu6502ByteCodesIntructions.LDY_IMMEDIATE:
-                case Cpu6502ByteCodesIntructions.LDY_ZEROPAGE:
-                case Cpu6502ByteCodesIntructions.LDY_ZEROPAGE_X:
-                case Cpu6502ByteCodesIntructions.LDY_ABSOLUTE:
-                case Cpu6502ByteCodesIntructions.LDY_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.LDY_IMMEDIATE:
+                case Cpu6502ByteCodesInstructions.LDY_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.LDY_ZEROPAGE_X:
+                case Cpu6502ByteCodesInstructions.LDY_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.LDY_ABSOLUTE_X:
                     LDY(instruction);
                     break;
-                case Cpu6502ByteCodesIntructions.STA_ZEROPAGE:
-                case Cpu6502ByteCodesIntructions.STA_ZEROPAGE_X:
-                case Cpu6502ByteCodesIntructions.STA_ABSOLUTE:
-                case Cpu6502ByteCodesIntructions.STA_ABSOLUTE_X:
-                case Cpu6502ByteCodesIntructions.STA_ABSOLUTE_Y:
-                case Cpu6502ByteCodesIntructions.STA_INDERECT_X:
-                case Cpu6502ByteCodesIntructions.STA_INDERECT_Y:
+                case Cpu6502ByteCodesInstructions.STA_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.STA_ZEROPAGE_X:
+                case Cpu6502ByteCodesInstructions.STA_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.STA_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.STA_ABSOLUTE_Y:
+                case Cpu6502ByteCodesInstructions.STA_INDERECT_X:
+                case Cpu6502ByteCodesInstructions.STA_INDERECT_Y:
                     STA(instruction);
                     break;
-                case Cpu6502ByteCodesIntructions.STX_ZEROPAGE:
-                case Cpu6502ByteCodesIntructions.STX_ZEROPAGE_Y:
-                case Cpu6502ByteCodesIntructions.STX_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.STX_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.STX_ZEROPAGE_Y:
+                case Cpu6502ByteCodesInstructions.STX_ABSOLUTE:
                     STX(instruction);
                     break;
-                case Cpu6502ByteCodesIntructions.STY_ZEROPAGE:
-                case Cpu6502ByteCodesIntructions.STY_ZEROPAGE_X:
-                case Cpu6502ByteCodesIntructions.STY_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.STY_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.STY_ZEROPAGE_X:
+                case Cpu6502ByteCodesInstructions.STY_ABSOLUTE:
                     STY(instruction);
                     break;
                 default:
@@ -101,12 +101,12 @@ namespace CPU
         {
             ushort addr = instruction switch
             {
-                Cpu6502ByteCodesIntructions.LDA_IMMEDIATE => PC++,
-                Cpu6502ByteCodesIntructions.LDA_ZEROPAGE => ReadZeroPageAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.LDA_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
-                Cpu6502ByteCodesIntructions.LDA_ABSOLUTE => ReadAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.LDA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
-                Cpu6502ByteCodesIntructions.LDA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.LDA_IMMEDIATE => PC++,
+                Cpu6502ByteCodesInstructions.LDA_ZEROPAGE => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.LDA_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.LDA_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             A.LoadValueFromAddress(addr);
@@ -115,11 +115,11 @@ namespace CPU
         {
             ushort addr = instruction switch
             {
-                Cpu6502ByteCodesIntructions.LDX_IMMEDIATE => PC++,
-                Cpu6502ByteCodesIntructions.LDX_ZEROPAGE => ReadZeroPageAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.LDX_ZEROPAGE_Y => ReadZeroPageAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesIntructions.LDX_ABSOLUTE => ReadAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.LDX_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.LDX_IMMEDIATE => PC++,
+                Cpu6502ByteCodesInstructions.LDX_ZEROPAGE => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.LDX_ZEROPAGE_Y => ReadZeroPageAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.LDX_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.LDX_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             X.LoadValueFromAddress(addr);
@@ -128,11 +128,11 @@ namespace CPU
         {
             ushort addr = instruction switch
             {
-                Cpu6502ByteCodesIntructions.LDY_IMMEDIATE => PC++,
-                Cpu6502ByteCodesIntructions.LDY_ZEROPAGE => ReadZeroPageAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.LDY_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
-                Cpu6502ByteCodesIntructions.LDY_ABSOLUTE => ReadAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.LDY_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.LDY_IMMEDIATE => PC++,
+                Cpu6502ByteCodesInstructions.LDY_ZEROPAGE => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.LDY_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.LDY_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.LDY_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             Y.LoadValueFromAddress(addr);
@@ -144,11 +144,11 @@ namespace CPU
         {
             ushort addr = instruction switch
             {
-                Cpu6502ByteCodesIntructions.STA_ZEROPAGE => ReadZeroPageAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.STA_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
-                Cpu6502ByteCodesIntructions.STA_ABSOLUTE => ReadAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.STA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
-                Cpu6502ByteCodesIntructions.STA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.STA_ZEROPAGE => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.STA_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.STA_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.STA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.STA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             A.WriteValueToAddress(addr);
@@ -157,9 +157,9 @@ namespace CPU
         {
             ushort addr = instruction switch
             {
-                Cpu6502ByteCodesIntructions.STX_ZEROPAGE => ReadZeroPageAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.STX_ZEROPAGE_Y => ReadZeroPageAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesIntructions.STX_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.STX_ZEROPAGE => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.STX_ZEROPAGE_Y => ReadZeroPageAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.STX_ABSOLUTE => ReadAddrFromMemory(),
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             X.WriteValueToAddress(addr);
@@ -168,9 +168,9 @@ namespace CPU
         {
             ushort addr = instruction switch
             {
-                Cpu6502ByteCodesIntructions.STY_ZEROPAGE => ReadZeroPageAddrFromMemory(),
-                Cpu6502ByteCodesIntructions.STY_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
-                Cpu6502ByteCodesIntructions.STY_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.STY_ZEROPAGE => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.STY_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.STY_ABSOLUTE => ReadAddrFromMemory(),
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             Y.WriteValueToAddress(addr);

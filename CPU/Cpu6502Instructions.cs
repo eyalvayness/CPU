@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CPU
 {
-    public static class Cpu6502ByteCodesIntructions
+    public static class Cpu6502ByteCodesInstructions
     {
 
         #region Load Operations
@@ -17,8 +17,8 @@ namespace CPU
         public const byte LDA_ABSOLUTE   = 0xAD;
         public const byte LDA_ABSOLUTE_X = 0xBD;
         public const byte LDA_ABSOLUTE_Y = 0xB9;
-        public const byte LDA_INDERECT_X = 0xA1;
-        public const byte LDA_INDERECT_Y = 0xB1;
+        public const byte LDA_INDIRECT_X = 0xA1;
+        public const byte LDA_INDIRECT_Y = 0xB1;
 
         // Load X Register
         public const byte LDX_IMMEDIATE  = 0xA2;
@@ -42,8 +42,8 @@ namespace CPU
         public const byte STA_ABSOLUTE   = 0x8D;
         public const byte STA_ABSOLUTE_X = 0x9D;
         public const byte STA_ABSOLUTE_Y = 0x99;
-        public const byte STA_INDERECT_X = 0x81;
-        public const byte STA_INDERECT_Y = 0x91;
+        public const byte STA_INDIRECT_X = 0x81;
+        public const byte STA_INDIRECT_Y = 0x91;
 
         // Store X Register
         public const byte STX_ZEROPAGE   = 0x86;
@@ -80,8 +80,8 @@ namespace CPU
         public const byte AND_ABSOLUTE   = 0x2D;
         public const byte AND_ABSOLUTE_X = 0x3D;
         public const byte AND_ABSOLUTE_Y = 0x39;
-        public const byte AND_INDERECT_X = 0x21;
-        public const byte AND_INDERECT_Y = 0x31;
+        public const byte AND_INDIRECT_X = 0x21;
+        public const byte AND_INDIRECT_Y = 0x31;
 
         // Exclusive OR
         public const byte EOR_IMMEDIATE  = 0x49;
@@ -90,8 +90,8 @@ namespace CPU
         public const byte EOR_ABSOLUTE   = 0x4D;
         public const byte EOR_ABSOLUTE_X = 0x5D;
         public const byte EOR_ABSOLUTE_Y = 0x59;
-        public const byte EOR_INDERECT_X = 0x41;
-        public const byte EOR_INDERECT_Y = 0x51;
+        public const byte EOR_INDIRECT_X = 0x41;
+        public const byte EOR_INDIRECT_Y = 0x51;
 
         // Logical Inclusive OR
         public const byte ORA_IMMEDIATE  = 0x09;
@@ -100,8 +100,8 @@ namespace CPU
         public const byte ORA_ABSOLUTE   = 0x0D;
         public const byte ORA_ABSOLUTE_X = 0x1D;
         public const byte ORA_ABSOLUTE_Y = 0x19;
-        public const byte ORA_INDERECT_X = 0x01;
-        public const byte ORA_INDERECT_Y = 0x11;
+        public const byte ORA_INDIRECT_X = 0x01;
+        public const byte ORA_INDIRECT_Y = 0x11;
 
         // Bit Test
         public const byte BIT_ZEROPAGE = 0x24;
@@ -116,8 +116,8 @@ namespace CPU
         public const byte ADC_ABSOLUTE   = 0x6D;
         public const byte ADC_ABSOLUTE_X = 0x7D;
         public const byte ADC_ABSOLUTE_Y = 0x79;
-        public const byte ADC_INDERECT_X = 0x61;
-        public const byte ADC_INDERECT_Y = 0x71;
+        public const byte ADC_INDIRECT_X = 0x61;
+        public const byte ADC_INDIRECT_Y = 0x71;
 
         // Substract with Carry
         public const byte SBC_IMMEDIATE  = 0xE9;
@@ -126,8 +126,8 @@ namespace CPU
         public const byte SBC_ABSOLUTE   = 0xED;
         public const byte SBC_ABSOLUTE_X = 0xFD;
         public const byte SBC_ABSOLUTE_Y = 0xF9;
-        public const byte SBC_INDERECT_X = 0xE1;
-        public const byte SBC_INDERECT_Y = 0xF1;
+        public const byte SBC_INDIRECT_X = 0xE1;
+        public const byte SBC_INDIRECT_Y = 0xF1;
 
         // Compare Accumulator
         public const byte CMP_IMMEDIATE  = 0xC9;
@@ -136,8 +136,8 @@ namespace CPU
         public const byte CMP_ABSOLUTE   = 0xCD;
         public const byte CMP_ABSOLUTE_X = 0xDD;
         public const byte CMP_ABSOLUTE_Y = 0xD9;
-        public const byte CMP_INDERECT_X = 0xC1;
-        public const byte CMP_INDERECT_Y = 0xD1;
+        public const byte CMP_INDIRECT_X = 0xC1;
+        public const byte CMP_INDIRECT_Y = 0xD1;
 
         // Compare X Register
         public const byte CPX_IMMEDIATE  = 0xE0;
@@ -205,19 +205,19 @@ namespace CPU
         public const byte JMP_ABSOLUTE = 0x4C;
         public const byte JMP_INDIRECT = 0x6C;
 
-        public const byte JSR = 0x20; // Jump to a Subroutine
-        public const byte RSS = 0x60; // Return from Subroutine
+        public const byte JSR_ABSOLUTE = 0x20; // Jump to a Subroutine
+        public const byte RTS = 0x60; // Return from Subroutine
         #endregion
 
         #region Branches
-        public const byte BCC = 0x90;// Branch if Carry Flag Clear
-        public const byte BCS = 0xB0;// Branch if Carry Flag Set
-        public const byte BEQ = 0xF0;// Branch if Zero Flag Set
-        public const byte BMI = 0x30;// Branch if Negative Flag Set
-        public const byte BNE = 0xD0;// Branch if Zero Flag Clear
-        public const byte BPL = 0x10;// Branch if Negative Flag Clear
-        public const byte BVC = 0x50;// Branch if Overflow Flag Clear
-        public const byte BVS = 0x70;// Branch if Overflow Flag Set
+        public const byte BCC_ABSOLUTE = 0x90;// Branch if Carry Flag Clear
+        public const byte BCS_ABSOLUTE = 0xB0;// Branch if Carry Flag Set
+        public const byte BEQ_ABSOLUTE = 0xF0;// Branch if Zero Flag Set
+        public const byte BMI_ABSOLUTE = 0x30;// Branch if Negative Flag Set
+        public const byte BNE_ABSOLUTE = 0xD0;// Branch if Zero Flag Clear
+        public const byte BPL_ABSOLUTE = 0x10;// Branch if Negative Flag Clear
+        public const byte BVC_ABSOLUTE = 0x50;// Branch if Overflow Flag Clear
+        public const byte BVS_ABSOLUTE = 0x70;// Branch if Overflow Flag Set
         #endregion
 
         #region Status Flag Changes
@@ -237,7 +237,7 @@ namespace CPU
         #endregion
     }
 
-    public static class Cpu6502StringIntructions
+    public static class Cpu6502StringInstructions
     {
         #region Load Operations
         public const string LDA = "lda"; // Load Accumulator
