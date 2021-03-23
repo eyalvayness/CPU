@@ -11,4 +11,10 @@
     <ProjectReference Include="..\CPU\CPU.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="main.s">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
