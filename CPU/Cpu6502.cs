@@ -54,8 +54,8 @@ namespace CPU
                 case Cpu6502ByteCodesInstructions.LDA_ABSOLUTE:
                 case Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_X:
                 case Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_Y:
-                case Cpu6502ByteCodesInstructions.LDA_INDERECT_X:
-                case Cpu6502ByteCodesInstructions.LDA_INDERECT_Y:
+                case Cpu6502ByteCodesInstructions.LDA_INDIRECT_X:
+                case Cpu6502ByteCodesInstructions.LDA_INDIRECT_Y:
                     LDA(instruction);
                     break;
                 case Cpu6502ByteCodesInstructions.LDX_IMMEDIATE:
@@ -77,8 +77,8 @@ namespace CPU
                 case Cpu6502ByteCodesInstructions.STA_ABSOLUTE:
                 case Cpu6502ByteCodesInstructions.STA_ABSOLUTE_X:
                 case Cpu6502ByteCodesInstructions.STA_ABSOLUTE_Y:
-                case Cpu6502ByteCodesInstructions.STA_INDERECT_X:
-                case Cpu6502ByteCodesInstructions.STA_INDERECT_Y:
+                case Cpu6502ByteCodesInstructions.STA_INDIRECT_X:
+                case Cpu6502ByteCodesInstructions.STA_INDIRECT_Y:
                     STA(instruction);
                     break;
                 case Cpu6502ByteCodesInstructions.STX_ZEROPAGE:
@@ -90,6 +90,28 @@ namespace CPU
                 case Cpu6502ByteCodesInstructions.STY_ZEROPAGE_X:
                 case Cpu6502ByteCodesInstructions.STY_ABSOLUTE:
                     STY(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.TAX:
+                case Cpu6502ByteCodesInstructions.TAY:
+                case Cpu6502ByteCodesInstructions.TXA:
+                case Cpu6502ByteCodesInstructions.TYA:
+                    var from = instruction switch
+                    {
+                        Cpu6502ByteCodesInstructions.TAX => A,
+                        Cpu6502ByteCodesInstructions.TAY => A,
+                        Cpu6502ByteCodesInstructions.TXA => X,
+                        Cpu6502ByteCodesInstructions.TYA => Y,
+                        _ => throw new NotImplementedException()
+                    };
+                    var to = instruction switch
+                    {
+                        Cpu6502ByteCodesInstructions.TAX => X,
+                        Cpu6502ByteCodesInstructions.TAY => Y,
+                        Cpu6502ByteCodesInstructions.TXA => A,
+                        Cpu6502ByteCodesInstructions.TYA => A,
+                        _ => throw new NotImplementedException()
+                    };
+                    from.TransferValueToRegister(to);
                     break;
                 default:
                     throw new NotImplementedException($"Instruction not implemented: 0x{instruction:X2} ({instruction})");
@@ -107,6 +129,8 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.LDA_ABSOLUTE => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.LDA_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.LDA_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             A.LoadValueFromAddress(addr);
@@ -149,6 +173,8 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.STA_ABSOLUTE => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.STA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.STA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
+                Cpu6502ByteCodesInstructions.STA_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.STA_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             A.WriteValueToAddress(addr);
@@ -336,8 +362,8 @@ namespace CPU
         readonly WeakReference<Cpu6502> _cpu;
         Cpu6502 Cpu => _cpu.TryGetTarget(out var cpu) ? cpu : throw new ArgumentNullException();
         public byte Value { get; internal set; }
-        public string HexValue => "0x" + Value.ToString("X2");
-        public string BinValue => "0b" + Convert.ToString(Value, 2).PadLeft(8, '0');
+        private string HexValue => "0x" + Value.ToString("X2");
+        private string BinValue => "0b" + Convert.ToString(Value, 2).PadLeft(8, '0');
 
         public Register(Cpu6502 cpu)
         {
@@ -348,8 +374,13 @@ namespace CPU
         public void LoadValueFromAddress(ushort address)
         {
             Value = Cpu._memory[address];
-            Cpu.PS = Cpu.PS with { Z = Value == 0, N = ((Value & (1 << 7)) >> 7) == 1 };
+            Cpu.PS = Cpu.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
         }
         public void WriteValueToAddress(ushort address) => Cpu._memory[address] = Value;
+        public void TransferValueToRegister(Register r)
+        {
+            r.Value = Value;
+            Cpu.PS = Cpu.PS with { Z = r.Value == 0, N = (r.Value & (1 << 7)) == (1 << 7) };
+        }
     }
 }

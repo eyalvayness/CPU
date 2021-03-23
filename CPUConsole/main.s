@@ -4,9 +4,7 @@
 
 	.org $0800
 reset:
-	ldy $02
-	ldx #$02
-	lda $0000,x
+	ldx #$ff
 	txs
 
 loop:

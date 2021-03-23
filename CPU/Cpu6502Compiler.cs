@@ -211,7 +211,7 @@ namespace CPU
                         Cpu6502StringInstructions.BRK => Cpu6502ByteCodesInstructions.BRK,
                         Cpu6502StringInstructions.NOP => Cpu6502ByteCodesInstructions.NOP,
                         Cpu6502StringInstructions.RTI => Cpu6502ByteCodesInstructions.RTI,
-                        _ => throw new NotImplementedException()
+                        _ => throw new NotImplementedException($"Instruction not implemented: 0x{instruction:X2} ({instruction})")
                     };
                     _writer.WriteByte(bc);
                     break;
@@ -981,7 +981,7 @@ namespace CPU
                     {
                         '$' => 16,
                         '%' => 2,
-                        _ => throw new NotFiniteNumberException()
+                        _ => throw new NotImplementedException()
                     };
                     str = str[1..];
                 }
