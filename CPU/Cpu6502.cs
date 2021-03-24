@@ -206,6 +206,40 @@ namespace CPU
                 case Cpu6502ByteCodesInstructions.CPY_ABSOLUTE:
                     CPY(instruction);
                     break;
+                case Cpu6502ByteCodesInstructions.INC_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.INC_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.INC_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.INC_ZEROPAGE_X:
+                    INC(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.INX:
+                case Cpu6502ByteCodesInstructions.INY:
+                case Cpu6502ByteCodesInstructions.DEX:
+                case Cpu6502ByteCodesInstructions.DEY:
+                    var register = instruction switch
+                    {
+                        Cpu6502ByteCodesInstructions.INX => X,
+                        Cpu6502ByteCodesInstructions.DEX => X,
+                        Cpu6502ByteCodesInstructions.INY => Y,
+                        Cpu6502ByteCodesInstructions.DEY => Y,
+                        _ => throw new NotImplementedException()
+                    };
+                    Action registerMethod = instruction switch
+                    {
+                        Cpu6502ByteCodesInstructions.INX => register.Increment,
+                        Cpu6502ByteCodesInstructions.INY => register.Increment,
+                        Cpu6502ByteCodesInstructions.DEX => register.Decrement,
+                        Cpu6502ByteCodesInstructions.DEY => register.Decrement,
+                        _ => throw new NotImplementedException()
+                    };
+                    registerMethod();
+                    break;
+                case Cpu6502ByteCodesInstructions.DEC_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.DEC_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.DEC_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.DEC_ZEROPAGE_X:
+                    DEC(instruction);
+                    break;
                 default:
                     throw new NotImplementedException($"Instruction not implemented: 0x{instruction:X2} ({instruction})");
             };
@@ -222,7 +256,7 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.LDA_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.LDA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.LDA_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.LDA_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.LDA_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
@@ -266,7 +300,7 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.STA_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.STA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.STA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.STA_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.STA_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.STA_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
@@ -333,7 +367,7 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.AND_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.AND_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.AND_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.AND_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.AND_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.AND_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException()
             };
@@ -351,7 +385,7 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.EOR_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.EOR_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.EOR_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.EOR_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.EOR_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.EOR_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException()
             };
@@ -369,7 +403,7 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.ORA_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.ORA_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.ORA_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.ORA_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.ORA_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.ORA_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException()
             };
@@ -402,11 +436,15 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.ADC_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.ADC_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.ADC_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.ADC_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.ADC_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.ADC_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
+            var res = A.Value + b;
+            A.Value = (byte)(res % 0x100);
+
+            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7), V = byte.MaxValue < res };
         }
         void SBC(byte instruction) // Substract with Carry
         {
@@ -418,11 +456,17 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.SBC_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.SBC_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.SBC_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.SBC_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.SBC_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.SBC_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
+            var carry = (PS.C ? 1 : 0) << 8;
+            var res = carry + A.Value - b;
+            A.Value = (byte)(Math.Abs(res) % 0x100);
+
+            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7), V = res <= byte.MaxValue };
+            throw new NotImplementedException();
         }
         void CMP(byte instruction) // Compare Accumulator
         {
@@ -434,11 +478,14 @@ namespace CPU
                 Cpu6502ByteCodesInstructions.CMP_ABSOLUTE   => ReadAddrFromMemory(),
                 Cpu6502ByteCodesInstructions.CMP_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
                 Cpu6502ByteCodesInstructions.CMP_ABSOLUTE_Y => ReadAddrFromMemory(offset: Y.Value),
-                Cpu6502ByteCodesInstructions.CMP_INDIRECT_X => _memory[(ReadZeroPageAddrFromMemory(offset: X.Value) % 0x00FF)],
+                Cpu6502ByteCodesInstructions.CMP_INDIRECT_X => _memory[ReadZeroPageAddrFromMemory(offset: X.Value) % 0x0100],
                 Cpu6502ByteCodesInstructions.CMP_INDIRECT_Y => _memory[ReadZeroPageAddrFromMemory() + Y.Value],
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
+            var res = A.Value - b;
+
+            PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
         }
         void CPX(byte instruction) // Compare X Register
         {
@@ -450,6 +497,9 @@ namespace CPU
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
+            var res = X.Value - b;
+
+            PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
         }
         void CPY(byte instruction) // Compare Y Register
         {
@@ -461,18 +511,43 @@ namespace CPU
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
+            var res = Y.Value - b;
+
+            PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
         }
         #endregion
 
         #region Increments & Decrements
-        void INC() // Increment a Memory Location
-        { }
+        void INC(byte instruction) // Increment a Memory Location
+        {
+            ushort addr = instruction switch
+            {
+                Cpu6502ByteCodesInstructions.INC_ZEROPAGE   => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.INC_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.INC_ABSOLUTE   => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.INC_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
+            };
+            var b = ++_memory[addr];
+            PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
+        }
         void INX() // Increment the X Register
         { }
         void INY() // Increment the Y Register
         { }
-        void DEC() // Decrement a Memory Location
-        { }
+        void DEC(byte instruction) // Decrement a Memory Location
+        {
+            ushort addr = instruction switch
+            {
+                Cpu6502ByteCodesInstructions.DEC_ZEROPAGE   => ReadZeroPageAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.DEC_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                Cpu6502ByteCodesInstructions.DEC_ABSOLUTE   => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.DEC_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
+            };
+            var b = --_memory[addr];
+            PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
+        }
         void DEX() // Decrement the X Register
         { }
         void DEY() // Decrement the Y Register
@@ -583,7 +658,7 @@ namespace CPU
     public class Register
     {
         readonly WeakReference<Cpu6502> _cpu;
-        Cpu6502 Cpu => _cpu.TryGetTarget(out var cpu) ? cpu : throw new ArgumentNullException();
+        Cpu6502 CPU => _cpu.TryGetTarget(out var cpu) ? cpu : throw new ArgumentNullException();
         public byte Value { get; internal set; }
         private string HexValue => "0x" + Value.ToString("X2");
         private string BinValue => "0b" + Convert.ToString(Value, 2).PadLeft(8, '0');
@@ -596,14 +671,24 @@ namespace CPU
 
         public void LoadValueFromAddress(ushort address)
         {
-            Value = Cpu._memory[address];
-            Cpu.PS = Cpu.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
+            Value = CPU._memory[address];
+            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
         }
-        public void WriteValueToAddress(ushort address) => Cpu._memory[address] = Value;
+        public void WriteValueToAddress(ushort address) => CPU._memory[address] = Value;
         public void TransferValueToRegister(Register r)
         {
             r.Value = Value;
-            Cpu.PS = Cpu.PS with { Z = r.Value == 0, N = (r.Value & (1 << 7)) == (1 << 7) };
+            CPU.PS = CPU.PS with { Z = r.Value == 0, N = (r.Value & (1 << 7)) == (1 << 7) };
+        }
+        public void Increment()
+        {
+            Value++;
+            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
+        }
+        public void Decrement()
+        {
+            Value--;
+            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
         }
     }
 }
