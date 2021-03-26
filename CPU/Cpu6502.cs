@@ -307,7 +307,11 @@ namespace CPU
         }
 
         #region Load Operations
-        void LDA(byte instruction) // Load Accumulator
+        /// <summary>
+        /// Load Accumulator
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void LDA(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -323,7 +327,11 @@ namespace CPU
             };
             A.LoadValueFromAddress(addr);
         }
-        void LDX(byte instruction) // Load X Register
+        /// <summary>
+        /// Load X Register
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void LDX(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -336,7 +344,11 @@ namespace CPU
             };
             X.LoadValueFromAddress(addr);
         }
-        void LDY(byte instruction) // Load Y Register
+        /// <summary>
+        /// Load Y Register
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void LDY(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -352,7 +364,11 @@ namespace CPU
         #endregion
 
         #region Store Operations
-        void STA(byte instruction) // Store Accumulator
+        /// <summary>
+        /// Store Accumulator
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void STA(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -367,7 +383,11 @@ namespace CPU
             };
             A.WriteValueToAddress(addr);
         }
-        void STX(byte instruction) // Store X Register
+        /// <summary>
+        /// Store X Register
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void STX(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -378,7 +398,11 @@ namespace CPU
             };
             X.WriteValueToAddress(addr);
         }
-        void STY(byte instruction) // Store Y Register
+        /// <summary>
+        /// Store Y Register
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void STY(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -392,27 +416,61 @@ namespace CPU
         #endregion
 
         #region Register Transfers
-        void TAX() => A.TransferValueToRegister(X); // Transfer Accumulator To X
-        void TAY() => A.TransferValueToRegister(Y); // Transfer Accumulator To Y
-        void TXA() => X.TransferValueToRegister(A); // Transfer X To Accumulator
-        void TYA() => Y.TransferValueToRegister(A); // Transfer Y To Accumulator
+        /// <summary>
+        /// Transfer Accumulator To X
+        /// </summary>
+        void TAX() => A.TransferValueToRegister(X);
+        /// <summary>
+        /// Transfer Accumulator To Y
+        /// </summary>
+        void TAY() => A.TransferValueToRegister(Y);
+        /// <summary>
+        /// Transfer X To Accumulator
+        /// </summary>
+        void TXA() => X.TransferValueToRegister(A);
+        /// <summary>
+        /// Transfer Y To Accumulator
+        /// </summary>
+        void TYA() => Y.TransferValueToRegister(A);
         #endregion
 
         #region Stack Operations
-        void TSX() // Transfer Stack Pointer to X
+        /// <summary>
+        /// Transfer Stack Pointer to X
+        /// </summary>
+        void TSX()
         {
             X.Value = SP;
             PS = PS with { Z = X.Value == 0, N = (X.Value & (1 << 7)) == (1 << 7) };
         }
-        void TXS() => SP = X.Value; // Transfer X to Stack Pointer
-        void PHA() => _memory[0x0100 + SP--] = A.Value; // Push Accumulator on Stack
-        void PHP() => _memory[0x0100 + SP--] = PS; // Push Processor Status on Stack
-        void PLA() => A.Value = _memory[0x0100 + SP++]; // Pull Accumulator from Stack
-        void PLP() => PS = _memory[0x0100 + SP++]; // Pull Processor Status from Stack
+        /// <summary>
+        /// Transfer X to Stack Pointer
+        /// </summary>
+        void TXS() => SP = X.Value;
+        /// <summary>
+        /// Push Accumulator on Stack
+        /// </summary>
+        void PHA() => _memory[0x0100 + SP--] = A.Value;
+        /// <summary>
+        /// Push Processor Status on Stack
+        /// </summary>
+        void PHP() => _memory[0x0100 + SP--] = PS;
+        /// <summary>
+        /// Pull Accumulator from Stack
+        /// </summary>
+        void PLA() => A.Value = _memory[0x0100 + SP++];
+        /// <summary>
+        /// Pull Processor Status from Stack
+        /// </summary>
+        void PLP() => PS = _memory[0x0100 + SP++];
         #endregion
 
         #region Logical
-        void AND(byte instruction) // Logical AND
+        /// <summary>
+        /// Logical AND 
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void AND(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -430,7 +488,11 @@ namespace CPU
             A.Value = (byte)(A.Value & b);
             PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7) };
         }
-        void EOR(byte instruction) // Exclusive OR
+        /// <summary>
+        /// Exclusive OR
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void EOR(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -448,7 +510,11 @@ namespace CPU
             A.Value = (byte)(A.Value ^ b);
             PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7) };
         }
-        void ORA(byte instruction) // Logical Inclusive OR
+        /// <summary>
+        /// Logical Inclusive OR
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void ORA(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -466,7 +532,11 @@ namespace CPU
             A.Value = (byte)(A.Value | b);
             PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7) };
         }
-        void BIT(byte instruction) // Bit Test
+        /// <summary>
+        /// Bit Test
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void BIT(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -481,7 +551,11 @@ namespace CPU
         #endregion
 
         #region Arithmetic
-        void ADC(byte instruction) // Add with Carry
+        /// <summary>
+        /// Add with Carry
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void ADC(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -501,7 +575,11 @@ namespace CPU
 
             PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7), V = byte.MaxValue < res };
         }
-        void SBC(byte instruction) // Substract with Carry
+        /// <summary>
+        /// Substract with Carry
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void SBC(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -523,7 +601,11 @@ namespace CPU
             PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7), V = res <= byte.MaxValue };
             throw new NotImplementedException();
         }
-        void CMP(byte instruction) // Compare Accumulator
+        /// <summary>
+        /// Compare Accumulator
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void CMP(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -542,7 +624,11 @@ namespace CPU
 
             PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
         }
-        void CPX(byte instruction) // Compare X Register
+        /// <summary>
+        /// Compare X Register
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void CPX(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -556,7 +642,11 @@ namespace CPU
 
             PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
         }
-        void CPY(byte instruction) // Compare Y Register
+        /// <summary>
+        /// Compare Y Register
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void CPY(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -573,7 +663,11 @@ namespace CPU
         #endregion
 
         #region Increments & Decrements
-        void INC(byte instruction) // Increment a Memory Location
+        /// <summary>
+        /// Increment a Memory Location
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void INC(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -586,9 +680,19 @@ namespace CPU
             var b = ++_memory[addr];
             PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
         }
-        void INX() => X.Increment(); // Increment the X Register
-        void INY() => Y.Increment(); // Increment the Y Register
-        void DEC(byte instruction) // Decrement a Memory Location
+        /// <summary>
+        /// Increment the X Register
+        /// </summary>
+        void INX() => X.Increment();
+        /// <summary>
+        /// Increment the Y Register
+        /// </summary>
+        void INY() => Y.Increment();
+        /// <summary>
+        /// Decrement a Memory Location
+        /// </summary>
+        /// <param name="instruction">Byte code instruction</param>
+        void DEC(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -601,8 +705,14 @@ namespace CPU
             var b = --_memory[addr];
             PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
         }
-        void DEX() => X.Decrement(); // Decrement the X Register
-        void DEY() => Y.Decrement(); // Decrement the Y Register
+        /// <summary>
+        /// /// Decrement the X Register
+        /// </summary>
+        void DEX() => X.Decrement();
+        /// <summary>
+        /// Decrement the Y Register
+        /// </summary>
+        void DEY() => Y.Decrement();
         #endregion
 
         #region Shifts
@@ -610,7 +720,7 @@ namespace CPU
         /// Arithmetic Shift Left
         /// </summary>
         /// <param name="instruction">Byte code instruction</param>
-        void ASL(byte instruction) 
+        void ASL(byte instruction)
         {
             ushort? addr = null;
             byte b;
@@ -645,7 +755,7 @@ namespace CPU
         /// Logical Shift Right
         /// </summary>
         /// <param name="instruction">Byte code instruction</param>
-        void LSR(byte instruction) 
+        void LSR(byte instruction)
         {
             ushort? addr = null;
             byte b;
@@ -681,7 +791,7 @@ namespace CPU
         /// Rotate Left
         /// </summary>
         /// <param name="instruction">Byte code instruction</param>
-        void ROL(byte instruction) 
+        void ROL(byte instruction)
         {
             ushort? addr = null;
             byte b;
@@ -716,7 +826,7 @@ namespace CPU
         /// Rotate Right
         /// </summary>
         /// <param name="instruction">Byte code instruction</param>
-        void ROR(byte instruction) 
+        void ROR(byte instruction)
         {
             ushort? addr = null;
             byte b;
@@ -755,7 +865,7 @@ namespace CPU
         /// Jump to Another Location
         /// </summary>
         /// <param name="instruction">Byte code instruction</param>
-        void JMP(byte instruction) 
+        void JMP(byte instruction)
         {
             ushort addr = instruction switch
             {
@@ -768,7 +878,7 @@ namespace CPU
         /// <summary>
         /// Jump to a Subroutine
         /// </summary>
-        void JSR() 
+        void JSR()
         {
             ushort addr = ReadAddrFromMemory();
 
@@ -782,7 +892,7 @@ namespace CPU
         /// <summary>
         /// Return from Subroutine
         /// </summary>
-        void RTS() 
+        void RTS()
         {
             byte upper = _memory[SP++];
             byte lower = _memory[SP++];
