@@ -221,7 +221,7 @@ namespace CPU
         #region Load Operations
         void WriteLDA() // Load Accumulator
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.LDA_IMMEDIATE,
@@ -244,7 +244,7 @@ namespace CPU
         }
         void WriteLDX() // Load X Register
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.LDX_IMMEDIATE,
@@ -264,7 +264,7 @@ namespace CPU
         }
         void WriteLDY() // Load Y Register
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.LDY_IMMEDIATE,
@@ -287,7 +287,7 @@ namespace CPU
         #region Store Operations
         void WriteSTA() // Store Accumulator
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.STA_ZEROPAGE,
@@ -309,7 +309,7 @@ namespace CPU
         }
         void WriteSTX() // Store X Register
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.STX_ZEROPAGE,
@@ -327,7 +327,7 @@ namespace CPU
         }
         void WriteSTY() // Store Y Register
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.STY_ZEROPAGE,
@@ -348,7 +348,7 @@ namespace CPU
         #region Logical
         void WriteAND() // Logical AND
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.AND_IMMEDIATE,
@@ -371,7 +371,7 @@ namespace CPU
         }
         void WriteEOR() // Exclusive OR
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.EOR_IMMEDIATE,
@@ -394,7 +394,7 @@ namespace CPU
         }
         void WriteORA() // Logical Inclusive OR
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.ORA_IMMEDIATE,
@@ -417,7 +417,7 @@ namespace CPU
         }
         void WriteBIT() // Bit Test
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.BIT_ZEROPAGE,
@@ -437,7 +437,7 @@ namespace CPU
         #region Arithmetic
         void WriteADC() // Add with Carry
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.ADC_IMMEDIATE,
@@ -460,7 +460,7 @@ namespace CPU
         }
         void WriteSBC() // Substract with Carry
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.SBC_IMMEDIATE,
@@ -483,7 +483,7 @@ namespace CPU
         }
         void WriteCMP() // Compare Accumulator
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.CMP_IMMEDIATE,
@@ -506,7 +506,7 @@ namespace CPU
         }
         void WriteCPX() // Compare X Register
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.CPX_IMMEDIATE,
@@ -524,7 +524,7 @@ namespace CPU
         }
         void WriteCPY() // Compare Y Register
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.CPY_IMMEDIATE,
@@ -545,7 +545,7 @@ namespace CPU
         #region Increments & Decrements
         void WriteINC() // Increment a Memory Location
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.INC_ZEROPAGE,
@@ -564,7 +564,7 @@ namespace CPU
         }
         void WriteDEC() // Decrement a Memory Location
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.DEC_ZEROPAGE,
@@ -586,7 +586,7 @@ namespace CPU
         #region Shifts
         void WriteASL() // Arithmetic Shift Left
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.ASL_ACCUMULATOR,
@@ -606,7 +606,7 @@ namespace CPU
         }
         void WriteLSR() // Logical Shift Right
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.LSR_ACCUMULATOR,
@@ -626,7 +626,7 @@ namespace CPU
         }
         void WriteROL() // Rotate Left
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.ROL_ACCUMULATOR,
@@ -646,7 +646,7 @@ namespace CPU
         }
         void WriteROR() // Rotate Right
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.ROR_ACCUMULATOR,
@@ -669,7 +669,7 @@ namespace CPU
         #region Jumps & Calls
         void WriteJMP() // Jump to Another Location
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.JMP_ABSOLUTE,
@@ -683,7 +683,7 @@ namespace CPU
         }
         void WriteJSR() // Jump to a Subroutine
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.JSR_ABSOLUTE,
@@ -699,7 +699,7 @@ namespace CPU
         #region Branches
         void WriteBCC() // Branch if Carry Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BCC_ABSOLUTE,
@@ -712,7 +712,7 @@ namespace CPU
         }
         void WriteBCS() // Branch if Carry Flag Set
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BCS_ABSOLUTE,
@@ -725,7 +725,7 @@ namespace CPU
         }
         void WriteBEQ() // Branch if Zero Flag Set
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BEQ_ABSOLUTE,
@@ -738,7 +738,7 @@ namespace CPU
         }
         void WriteBMI() // Branch if Negative Flag Set
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BMI_ABSOLUTE,
@@ -751,7 +751,7 @@ namespace CPU
         }
         void WriteBNE() // Branch if Zero Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BNE_ABSOLUTE,
@@ -764,7 +764,7 @@ namespace CPU
         }
         void WriteBPL() // Branch if Negative Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BPL_ABSOLUTE,
@@ -777,7 +777,7 @@ namespace CPU
         }
         void WriteBVC() // Branch if Overflow Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BVC_ABSOLUTE,
@@ -790,7 +790,7 @@ namespace CPU
         }
         void WriteBVS() // Branch if Overflow Flag Set
         {
-            var vt = _reader.GetValue(_links, out var b, out var s);
+            var vt = _reader.GetValue(_links, out var s);
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BVS_ABSOLUTE,
@@ -961,10 +961,9 @@ namespace CPU
                 IndirectY = Indirect | Y,
             }
 
-            public ValueTypes GetValue(Dictionary<string, ushort> links, out byte b, out ushort s)
+            public ValueTypes GetValue(Dictionary<string, ushort> links, out ushort s)
             {
                 ValueTypes vt = ValueTypes.None;
-                b = 0;
                 s = 0;
                 int ba = 10;
                 var str = GetRawString();
@@ -1006,7 +1005,6 @@ namespace CPU
 
                 if (s <= byte.MaxValue)
                 {
-                    b = (byte)s;
                     if (!vt.HasFlag(ValueTypes.Immediate))
                         vt |= ValueTypes.ZeroPage;
                 }

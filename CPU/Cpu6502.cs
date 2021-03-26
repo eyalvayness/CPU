@@ -6,16 +6,6 @@ namespace CPU
 {
     public class Cpu6502
     {
-        public static class Consts
-        {
-            public const ushort NMI_ADDRESS_L   = '\uFFFA';
-            public const ushort NMI_ADDRESS_U   = '\uFFFB';
-            public const ushort RESET_ADDRESS_L = '\uFFFC';
-            public const ushort RESET_ADDRESS_U = '\uFFFD';
-            public const ushort BRK_ADDRESS_L   = '\uFFFE';
-            public const ushort BRK_ADDRESS_U   = '\uFFFF';
-        }
-
         public ushort PC { get; internal set; } // Program Counter
         public byte SP { get; internal set; } // Stack Pointer
 
@@ -92,45 +82,34 @@ namespace CPU
                     STY(instruction);
                     break;
                 case Cpu6502ByteCodesInstructions.TAX:
+                    TAX();
+                    break;
                 case Cpu6502ByteCodesInstructions.TAY:
+                    TAY();
+                    break;
                 case Cpu6502ByteCodesInstructions.TXA:
+                    TXA();
+                    break;
                 case Cpu6502ByteCodesInstructions.TYA:
-                    var from = instruction switch
-                    {
-                        Cpu6502ByteCodesInstructions.TAX => A,
-                        Cpu6502ByteCodesInstructions.TAY => A,
-                        Cpu6502ByteCodesInstructions.TXA => X,
-                        Cpu6502ByteCodesInstructions.TYA => Y,
-                        _ => throw new NotImplementedException()
-                    };
-                    var to = instruction switch
-                    {
-                        Cpu6502ByteCodesInstructions.TAX => X,
-                        Cpu6502ByteCodesInstructions.TAY => Y,
-                        Cpu6502ByteCodesInstructions.TXA => A,
-                        Cpu6502ByteCodesInstructions.TYA => A,
-                        _ => throw new NotImplementedException()
-                    };
-                    from.TransferValueToRegister(to);
+                    TYA();
                     break;
                 case Cpu6502ByteCodesInstructions.TSX:
-                    X.Value = SP;
-                    PS = PS with { Z = X.Value == 0, N = (X.Value & (1 << 7)) == (1 << 7) };
+                    TSX();
                     break;
                 case Cpu6502ByteCodesInstructions.TXS:
-                    SP = X.Value;
+                    TXS();
                     break;
                 case Cpu6502ByteCodesInstructions.PHA:
-                    _memory[0x0100 + SP--] = A.Value;
+                    PHA();
                     break;
                 case Cpu6502ByteCodesInstructions.PHP:
-                    _memory[0x0100 + SP--] = PS;
+                    PHP();
                     break;
                 case Cpu6502ByteCodesInstructions.PLA:
-                    A.Value = _memory[0x0100 + SP++];
+                    PLA();
                     break;
                 case Cpu6502ByteCodesInstructions.PLP:
-                    PS = _memory[0x0100 + SP++];
+                    PLP();
                     break;
                 case Cpu6502ByteCodesInstructions.AND_IMMEDIATE:
                 case Cpu6502ByteCodesInstructions.AND_ZEROPAGE:
@@ -213,32 +192,90 @@ namespace CPU
                     INC(instruction);
                     break;
                 case Cpu6502ByteCodesInstructions.INX:
+                    INX();
+                    break;
                 case Cpu6502ByteCodesInstructions.INY:
+                    INY();
+                    break;
                 case Cpu6502ByteCodesInstructions.DEX:
+                    DEX();
+                    break;
                 case Cpu6502ByteCodesInstructions.DEY:
-                    var register = instruction switch
-                    {
-                        Cpu6502ByteCodesInstructions.INX => X,
-                        Cpu6502ByteCodesInstructions.DEX => X,
-                        Cpu6502ByteCodesInstructions.INY => Y,
-                        Cpu6502ByteCodesInstructions.DEY => Y,
-                        _ => throw new NotImplementedException()
-                    };
-                    Action registerMethod = instruction switch
-                    {
-                        Cpu6502ByteCodesInstructions.INX => register.Increment,
-                        Cpu6502ByteCodesInstructions.INY => register.Increment,
-                        Cpu6502ByteCodesInstructions.DEX => register.Decrement,
-                        Cpu6502ByteCodesInstructions.DEY => register.Decrement,
-                        _ => throw new NotImplementedException()
-                    };
-                    registerMethod();
+                    DEY();
                     break;
                 case Cpu6502ByteCodesInstructions.DEC_ABSOLUTE:
                 case Cpu6502ByteCodesInstructions.DEC_ABSOLUTE_X:
                 case Cpu6502ByteCodesInstructions.DEC_ZEROPAGE:
                 case Cpu6502ByteCodesInstructions.DEC_ZEROPAGE_X:
                     DEC(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.ASL_ACCUMULATOR:
+                case Cpu6502ByteCodesInstructions.ASL_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.ASL_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.ASL_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.ASL_ZEROPAGE_X:
+                    ASL(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.LSR_ACCUMULATOR:
+                case Cpu6502ByteCodesInstructions.LSR_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.LSR_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.LSR_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.LSR_ZEROPAGE_X:
+                    LSR(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.ROL_ACCUMULATOR:
+                case Cpu6502ByteCodesInstructions.ROL_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.ROL_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.ROL_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.ROL_ZEROPAGE_X:
+                    ROL(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.ROR_ACCUMULATOR:
+                case Cpu6502ByteCodesInstructions.ROR_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.ROR_ABSOLUTE_X:
+                case Cpu6502ByteCodesInstructions.ROR_ZEROPAGE:
+                case Cpu6502ByteCodesInstructions.ROR_ZEROPAGE_X:
+                    ROR(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.JMP_ABSOLUTE:
+                case Cpu6502ByteCodesInstructions.JMP_INDIRECT:
+                    JMP(instruction);
+                    break;
+                case Cpu6502ByteCodesInstructions.JSR_ABSOLUTE:
+                    JSR();
+                    break;
+                case Cpu6502ByteCodesInstructions.RTS:
+                    RTS();
+                    break;
+                case Cpu6502ByteCodesInstructions.CLC:
+                    CLC();
+                    break;
+                case Cpu6502ByteCodesInstructions.CLD:
+                    CLD();
+                    break;
+                case Cpu6502ByteCodesInstructions.CLI:
+                    CLI();
+                    break;
+                case Cpu6502ByteCodesInstructions.CLV:
+                    CLV();
+                    break;
+                case Cpu6502ByteCodesInstructions.SEC:
+                    SEC();
+                    break;
+                case Cpu6502ByteCodesInstructions.SED:
+                    SED();
+                    break;
+                case Cpu6502ByteCodesInstructions.SEI:
+                    SEI();
+                    break;
+                case Cpu6502ByteCodesInstructions.BRK:
+                    BRK();
+                    break;
+                case Cpu6502ByteCodesInstructions.NOP:
+                    NOP();
+                    break;
+                case Cpu6502ByteCodesInstructions.RTI:
+                    RTI();
                     break;
                 default:
                     throw new NotImplementedException($"Instruction not implemented: 0x{instruction:X2} ({instruction})");
@@ -331,29 +368,23 @@ namespace CPU
         #endregion
 
         #region Register Transfers
-        void TAX() // Transfer Accumulator To X
-        { }
-        void TAY() // Transfer Accumulator To Y
-        { }
-        void TXA() // Transfer X To Accumulator
-        { }
-        void TYA() // Transfer Y To Accumulator
-        { }
+        void TAX() => A.TransferValueToRegister(X); // Transfer Accumulator To X
+        void TAY() => A.TransferValueToRegister(Y); // Transfer Accumulator To Y
+        void TXA() => X.TransferValueToRegister(A); // Transfer X To Accumulator
+        void TYA() => Y.TransferValueToRegister(A); // Transfer Y To Accumulator
         #endregion
 
         #region Stack Operations
         void TSX() // Transfer Stack Pointer to X
-        { }
-        void TXS() // Transfer X to Stack Pointer
-        { }
-        void PHA() // Push Accumulator on Stack
-        { }
-        void PHP() // Push Processor Status on Stack
-        { }
-        void PLA() // Pull Accumulator from Stack
-        { }
-        void PLP()  // Pull Processor Status from Stack
-        { }
+        {
+            X.Value = SP;
+            PS = PS with { Z = X.Value == 0, N = (X.Value & (1 << 7)) == (1 << 7) };
+        }
+        void TXS() => SP = X.Value; // Transfer X to Stack Pointer
+        void PHA() => _memory[0x0100 + SP--] = A.Value; // Push Accumulator on Stack
+        void PHP() => _memory[0x0100 + SP--] = PS; // Push Processor Status on Stack
+        void PLA() => A.Value = _memory[0x0100 + SP++]; // Pull Accumulator from Stack
+        void PLP() => PS = _memory[0x0100 + SP++]; // Pull Processor Status from Stack
         #endregion
 
         #region Logical
@@ -531,10 +562,8 @@ namespace CPU
             var b = ++_memory[addr];
             PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
         }
-        void INX() // Increment the X Register
-        { }
-        void INY() // Increment the Y Register
-        { }
+        void INX() => X.Increment(); // Increment the X Register
+        void INY() => Y.Increment(); // Increment the Y Register
         void DEC(byte instruction) // Decrement a Memory Location
         {
             ushort addr = instruction switch
@@ -548,30 +577,169 @@ namespace CPU
             var b = --_memory[addr];
             PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
         }
-        void DEX() // Decrement the X Register
-        { }
-        void DEY() // Decrement the Y Register
-        { }
+        void DEX() => X.Decrement(); // Decrement the X Register
+        void DEY() => Y.Decrement(); // Decrement the Y Register
         #endregion
 
         #region Shifts
-        void ASL() // Arithmetic Shift Left
-        { }
-        void LSR() // Logical Shift Right
-        { } 
-        void ROL() // Rotate Left
-        { } 
-        void ROR() // Rotate Right
-        { } 
+        void ASL(byte instruction) // Arithmetic Shift Left
+        {
+            ushort? addr = null;
+            byte b;
+            int res;
+            if (instruction == Cpu6502ByteCodesInstructions.ASL_ACCUMULATOR)
+                b = A.Value;
+            else
+            {
+                addr = instruction switch
+                {
+                    Cpu6502ByteCodesInstructions.ASL_ZEROPAGE   => ReadZeroPageAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.ASL_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                    Cpu6502ByteCodesInstructions.ASL_ABSOLUTE   => ReadAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.ASL_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                    _ => throw new NotImplementedException()
+                };
+                b = _memory[addr.Value];
+            }
+
+            res = b << 1;
+            b = (byte)(res % 0x0100);
+            if (instruction == Cpu6502ByteCodesInstructions.ASL_ACCUMULATOR)
+                A.Value = b;
+            else
+            {
+                _ = addr ?? throw new NullReferenceException();
+                _memory[addr.Value] = b;
+            }
+            PS = PS with { C = (res & (1 << 8)) == 1 << 8, Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+        }
+        void LSR(byte instruction) // Logical Shift Right
+        {
+            ushort? addr = null;
+            byte b;
+            int res;
+            if (instruction == Cpu6502ByteCodesInstructions.LSR_ACCUMULATOR)
+                b = A.Value;
+            else
+            {
+                addr = instruction switch
+                {
+                    Cpu6502ByteCodesInstructions.LSR_ZEROPAGE   => ReadZeroPageAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.LSR_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                    Cpu6502ByteCodesInstructions.LSR_ABSOLUTE   => ReadAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.LSR_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                    _ => throw new NotImplementedException()
+                };
+                b = _memory[addr.Value];
+            }
+
+            PS = PS with { C = (b & 1) == 1 };
+            res = b >> 1;
+            b = (byte)(res % 0x0100);
+            if (instruction == Cpu6502ByteCodesInstructions.LSR_ACCUMULATOR)
+                A.Value = b;
+            else
+            {
+                _ = addr ?? throw new NullReferenceException();
+                _memory[addr.Value] = b;
+            }
+            PS = PS with { Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+        } 
+        void ROL(byte instruction) // Rotate Left
+        {
+            ushort? addr = null;
+            byte b;
+            int res;
+            if (instruction == Cpu6502ByteCodesInstructions.ROL_ACCUMULATOR)
+                b = A.Value;
+            else
+            {
+                addr = instruction switch
+                {
+                    Cpu6502ByteCodesInstructions.ROL_ZEROPAGE   => ReadZeroPageAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.ROL_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                    Cpu6502ByteCodesInstructions.ROL_ABSOLUTE   => ReadAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.ROL_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                    _ => throw new NotImplementedException()
+                };
+                b = _memory[addr.Value];
+            }
+
+            res = (b << 1) + (PS.C ? 1 : 0);
+            b = (byte)(res % 0x0100);
+            if (instruction == Cpu6502ByteCodesInstructions.ROL_ACCUMULATOR)
+                A.Value = b;
+            else
+            {
+                _ = addr ?? throw new NullReferenceException();
+                _memory[addr.Value] = b;
+            }
+            PS = PS with { C = (res & (1 << 8)) == 1 << 8, Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+        } 
+        void ROR(byte instruction) // Rotate Right
+        {
+            ushort? addr = null;
+            byte b;
+            int res;
+            if (instruction == Cpu6502ByteCodesInstructions.ROR_ACCUMULATOR)
+                b = A.Value;
+            else
+            {
+                addr = instruction switch
+                {
+                    Cpu6502ByteCodesInstructions.ROR_ZEROPAGE   => ReadZeroPageAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.ROR_ZEROPAGE_X => ReadZeroPageAddrFromMemory(offset: X.Value),
+                    Cpu6502ByteCodesInstructions.ROR_ABSOLUTE   => ReadAddrFromMemory(),
+                    Cpu6502ByteCodesInstructions.ROR_ABSOLUTE_X => ReadAddrFromMemory(offset: X.Value),
+                    _ => throw new NotImplementedException()
+                };
+                b = _memory[addr.Value];
+            }
+
+            PS = PS with { C = (b & 1) == 1 };
+            res = (b >> 1) + (PS.C ? 1 << 7 : 0);
+            b = (byte)(res % 0x0100);
+            if (instruction == Cpu6502ByteCodesInstructions.ROR_ACCUMULATOR)
+                A.Value = b;
+            else
+            {
+                _ = addr ?? throw new NullReferenceException();
+                _memory[addr.Value] = b;
+            }
+            PS = PS with { Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+        } 
         #endregion
 
         #region Jumps & Calls
-        void JMP() // Jump to Another Location
-        { }
+        void JMP(byte instruction) // Jump to Another Location
+        {
+            ushort addr = instruction switch
+            {
+                Cpu6502ByteCodesInstructions.JMP_ABSOLUTE => ReadAddrFromMemory(),
+                Cpu6502ByteCodesInstructions.JMP_INDIRECT => _memory[ReadAddrFromMemory()],
+                _ => throw new NotImplementedException()
+            };
+            PC = addr;
+        }
         void JSR() // Jump to a Subroutine
-        { }
+        {
+            ushort addr = ReadAddrFromMemory();
+
+            var currentAddr = PC - 1;
+            _memory[PS--] = (byte)(currentAddr % 0x0100);
+            currentAddr = (byte)(currentAddr >> 8);
+            _memory[PS--] = (byte)(currentAddr % 0x0100);
+
+            PC = addr;
+        }
         void RTS() // Return from Subroutine
-        { }
+        {
+            byte upper = _memory[SP++];
+            byte lower = _memory[SP++];
+
+            ushort addr = ComputeAddrFromUL(lower, upper, offset: 1);
+            PC = addr;
+        }
         #endregion
 
         #region Branches
@@ -594,41 +762,31 @@ namespace CPU
         #endregion
 
         #region Status Flag Changes
-        void CLC() // Clear Carry Flag
-        { }
-        void CLD() // Clear Decimal Mode Flag
-        { }
-        void CLI() // Clear Interrupt Disable Flag
-        { }
-        void CLV() // Clear Overflow Flag
-        { }
-        void SEC()  // Set Carry Flag
-        { }
-        void SED() // Set Decimal Mode Flag
-        { }
-        void SEI()  // Set Interrupt Disable Flag
-        { }
+        void CLC() => PS = PS with { C = false }; // Clear Carry Flag
+        void CLD() => PS = PS with { D = false }; // Clear Decimal Mode Flag
+        void CLI() => PS = PS with { I = false }; // Clear Interrupt Disable Flag
+        void CLV() => PS = PS with { V = false }; // Clear Overflow Flag
+        void SEC() => PS = PS with { C = true }; // Set Carry Flag
+        void SED() => PS = PS with { D = true }; // Set Decimal Mode Flag
+        void SEI() => PS = PS with { I = true }; // Set Interrupt Disable Flag
         #endregion
 
         #region System Functions
         void BRK() // Force an Interrupt
-        {
-        } 
+        { } 
         void NOP() // No Operation
-        {
-        } 
+        { } 
         void RTI() // Return from Interrupt
-        {
-        } 
+        { } 
         #endregion
 
         ushort ReadZeroPageAddrFromMemory(byte offset = 0) => ComputeAddrFromUL(_memory[PC++], 0, offset);
         ushort ReadAddrFromMemory(byte offset = 0) => ComputeAddrFromUL(_memory[PC++], _memory[PC++], offset);
 
-        ushort ComputeAddrFromUL(byte lower, byte upper, byte offset = 0) => (ushort)(upper * (byte.MaxValue + 1) + lower + offset);
-        ushort GetNmiAddress() => ComputeAddrFromUL(_memory[Consts.NMI_ADDRESS_L], _memory[Consts.NMI_ADDRESS_U]);
-        ushort GetResetAddress() => ComputeAddrFromUL(_memory[Consts.RESET_ADDRESS_L], _memory[Consts.RESET_ADDRESS_U]);
-        ushort GetBrkAddress() => ComputeAddrFromUL(_memory[Consts.BRK_ADDRESS_L], _memory[Consts.BRK_ADDRESS_U]);
+        static ushort ComputeAddrFromUL(byte lower, byte upper, byte offset = 0) => (ushort)(upper * (byte.MaxValue + 1) + lower + offset);
+        ushort GetNmiAddress() => ComputeAddrFromUL(_memory[Cpu6502Consts.NMI_ADDRESS_L], _memory[Cpu6502Consts.NMI_ADDRESS_U]);
+        ushort GetResetAddress() => ComputeAddrFromUL(_memory[Cpu6502Consts.RESET_ADDRESS_L], _memory[Cpu6502Consts.RESET_ADDRESS_U]);
+        ushort GetBrkAddress() => ComputeAddrFromUL(_memory[Cpu6502Consts.BRK_ADDRESS_L], _memory[Cpu6502Consts.BRK_ADDRESS_U]);
     }
 
     public record ProcessorStatus

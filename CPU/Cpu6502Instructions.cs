@@ -6,6 +6,16 @@ using System.Threading.Tasks;
 
 namespace CPU
 {
+    public static class Cpu6502Consts
+    {
+        public const ushort NMI_ADDRESS_L = 0xFFFA;
+        public const ushort NMI_ADDRESS_U = 0xFFFB;
+        public const ushort RESET_ADDRESS_L = 0xFFFC;
+        public const ushort RESET_ADDRESS_U = 0xFFFD;
+        public const ushort BRK_ADDRESS_L = 0xFFFE;
+        public const ushort BRK_ADDRESS_U = 0xFFFF;
+    }
+
     public static class Cpu6502ByteCodesInstructions
     {
 
@@ -224,7 +234,7 @@ namespace CPU
         public const byte CLC = 0x18; // Clear Carry Flag
         public const byte CLD = 0xD8; // Clear Decimal Mode Flag
         public const byte CLI = 0x58; // Clear Interrupt Disable Flag
-        public const byte CLV = 0xD8; // Clear Overflow Flag
+        public const byte CLV = 0xB8; // Clear Overflow Flag
         public const byte SEC = 0x38; // Set Carry Flag
         public const byte SED = 0xF8; // Set Decimal Mode Flag
         public const byte SEI = 0x78; // Set Interrupt Disable Flag
