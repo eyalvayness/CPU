@@ -1099,7 +1099,7 @@ namespace CPU
         };
     }
 
-    [DebuggerDisplay("{Value}, {HexValue, nq}, {BinValue, nq}")]
+    [DebuggerDisplay("{Value}, {HexValue, nq}, {BinValue, nq}, {CharValue}")]
     public class Register
     {
         readonly WeakReference<Cpu6502> _cpu;
@@ -1107,7 +1107,8 @@ namespace CPU
         public byte Value { get; internal set; }
         private string HexValue => "0x" + Value.ToString("X2");
         private string BinValue => "0b" + Convert.ToString(Value, 2).PadLeft(8, '0');
-
+        private char CharValue => (char)Value;
+        
         public Register(Cpu6502 cpu)
         {
             _cpu = new(cpu);

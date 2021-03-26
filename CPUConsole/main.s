@@ -1,14 +1,23 @@
-	.org $0000	
-	.word 1234
-	.word $55
+OUT = $6000
 
-	.org $0800
+	.org $7000
+message:
+	.asciiz "Hello, world!"
+loop:
+	jmp loop
+
+	.org $8000
 reset:
 	ldx #$ff
 	txs
+	ldx #0
 
-loop:
-	jmp loop
+print:
+	lda message,x
+	beq loop
+	sta OUT
+	inx
+	jmp print
 
 	.org $fffc
 	.word reset

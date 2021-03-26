@@ -40,6 +40,15 @@ namespace CPU
 
             if (c == '\t')
                 CompileInstruction();
+            else if (char.IsUpper(c))
+            {
+                string v = _reader.GetWord();
+                var eq = _reader.GetRawString();
+                if (!eq.Contains('='))
+                    throw new NotImplementedException();
+                var vt = _reader.GetValue(_links, out var s);
+                _links.Add(v, s);
+            }
             else
                 _links.Add(_reader.GetWord(), (ushort)_writer.Position);
 
@@ -969,19 +978,9 @@ namespace CPU
                 var str = GetRawString();
                 if (str == "a")
                     return ValueTypes.A;
-                if (!char.IsDigit(str[0]))
+                if (!char.IsDigit(str[0]) && str[0] == '#')
                 {
-                    if (str[0] == '#')
-                    {
-                        vt |= ValueTypes.Immediate;
-                        str = str[1..];
-                    }
-                    ba = str[0] switch
-                    {
-                        '$' => 16,
-                        '%' => 2,
-                        _ => throw new NotImplementedException()
-                    };
+                    vt |= ValueTypes.Immediate;
                     str = str[1..];
                 }
                 if (str.Contains('(') && str.Contains(')'))
@@ -1001,7 +1000,17 @@ namespace CPU
                         _ => throw new NotImplementedException()
                     };
                 }
-                s = Convert.ToUInt16(str, ba);
+                if (!links.ContainsKey(str) && !char.IsDigit(str[0]))
+                {
+                    ba = str[0] switch
+                    {
+                        '$' => 16,
+                        '%' => 2,
+                        _ => throw new NotImplementedException()
+                    };
+                    str = str[1..];
+                }
+                s = links.ContainsKey(str) ? links[str] : Convert.ToUInt16(str, ba);
 
                 if (s <= byte.MaxValue)
                 {
