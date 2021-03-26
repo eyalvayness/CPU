@@ -12,7 +12,7 @@ namespace CPU
         bool _disposed;
         readonly MemoryStream _writer;
         readonly Reader _reader;
-        Dictionary<string, ushort> _links;
+        readonly Dictionary<string, ushort> _links;
 
         Cpu6502Compiler(string inFilepath)
         {
