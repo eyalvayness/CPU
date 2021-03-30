@@ -441,7 +441,7 @@ namespace CPU
         void TSX()
         {
             X.Value = SP;
-            PS = PS with { Z = X.Value == 0, N = (X.Value & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = X.Value == 0, N = (X.Value >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Transfer X to Stack Pointer
@@ -486,7 +486,7 @@ namespace CPU
             };
             var b = _memory[addr];
             A.Value = (byte)(A.Value & b);
-            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Exclusive OR
@@ -508,7 +508,7 @@ namespace CPU
             };
             var b = _memory[addr];
             A.Value = (byte)(A.Value ^ b);
-            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Logical Inclusive OR
@@ -530,7 +530,7 @@ namespace CPU
             };
             var b = _memory[addr];
             A.Value = (byte)(A.Value | b);
-            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Bit Test
@@ -546,7 +546,7 @@ namespace CPU
             };
             var b = _memory[addr];
             var r = b & A.Value;
-            PS = PS with { Z = r == 0, V = (b & (1 << 6)) == (1 << 6), N = (b & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = r == 0, V = (b >> 6 & 1) == 1, N = (b >> 7 & 1) == 1 };
         }
         #endregion
 
@@ -557,6 +557,8 @@ namespace CPU
         /// <param name="instruction">Byte code instruction</param>
         void ADC(byte instruction)
         {
+            if (PS.D)
+                throw new NotImplementedException("Decimal Mode not implemented yet.");
             ushort addr = instruction switch
             {
                 Cpu6502ByteCodesInstructions.ADC_IMMEDIATE => PC++,
@@ -570,10 +572,12 @@ namespace CPU
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
-            var res = A.Value + b;
-            A.Value = (byte)(res % 0x100);
-
-            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7), V = byte.MaxValue < res };
+            var res = A.Value + b + (PS.C ? 1 : 0);
+            PS = PS with { C = res > 0xFF, V = byte.MaxValue < res };
+            
+            A.Value = (byte)(res & 0xFF);
+            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1 };
+            throw new NotImplementedException();
         }
         /// <summary>
         /// Substract with Carry
@@ -581,6 +585,8 @@ namespace CPU
         /// <param name="instruction">Byte code instruction</param>
         void SBC(byte instruction)
         {
+            if (PS.D)
+                throw new NotImplementedException("Decimal Mode not implemented yet.");
             ushort addr = instruction switch
             {
                 Cpu6502ByteCodesInstructions.SBC_IMMEDIATE => PC++,
@@ -594,11 +600,10 @@ namespace CPU
                 _ => throw new NotImplementedException()
             };
             var b = _memory[addr];
-            var carry = (PS.C ? 1 : 0) << 8;
-            var res = carry + A.Value - b;
-            A.Value = (byte)(Math.Abs(res) % 0x100);
+            var res = A.Value - b - (PS.C ? 0 : 1);
+            A.Value = (byte)(res & 0xFF);
 
-            PS = PS with { Z = A.Value == 0, N = (A.Value & (1 << 7)) == (1 << 7), V = res <= byte.MaxValue };
+            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1, V = res <= byte.MaxValue };
             throw new NotImplementedException();
         }
         /// <summary>
@@ -622,7 +627,7 @@ namespace CPU
             var b = _memory[addr];
             var res = A.Value - b;
 
-            PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
+            PS = PS with { Z = res == 0, N = (res >> 7 & 1) == 1, C = res <= 0 };
         }
         /// <summary>
         /// Compare X Register
@@ -640,7 +645,7 @@ namespace CPU
             var b = _memory[addr];
             var res = X.Value - b;
 
-            PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
+            PS = PS with { Z = res == 0, N = (res >> 7 & 1) == 1, C = res <= 0 };
         }
         /// <summary>
         /// Compare Y Register
@@ -658,7 +663,7 @@ namespace CPU
             var b = _memory[addr];
             var res = Y.Value - b;
 
-            PS = PS with { Z = res == 0, N = (res & (1 << 7)) == (1 << 7), C = res <= 0 };
+            PS = PS with { Z = res == 0, N = (res >> 7 & 1) == 1, C = res <= 0 };
         }
         #endregion
 
@@ -678,7 +683,7 @@ namespace CPU
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             var b = ++_memory[addr];
-            PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = b == 0, N = (b >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Increment the X Register
@@ -703,7 +708,7 @@ namespace CPU
                 _ => throw new NotImplementedException($"Instruction not implemented: {instruction:X2} ({instruction})")
             };
             var b = --_memory[addr];
-            PS = PS with { Z = b == 0, N = (b & (1 << 7)) == (1 << 7) };
+            PS = PS with { Z = b == 0, N = (b >> 7 & 1) == 1 };
         }
         /// <summary>
         /// /// Decrement the X Register
@@ -749,7 +754,7 @@ namespace CPU
                 _ = addr ?? throw new NullReferenceException();
                 _memory[addr.Value] = b;
             }
-            PS = PS with { C = (res & (1 << 8)) == 1 << 8, Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+            PS = PS with { C = (res >> 8 & 1) == 1, Z = b == 0, V = (b >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Logical Shift Right
@@ -785,7 +790,7 @@ namespace CPU
                 _ = addr ?? throw new NullReferenceException();
                 _memory[addr.Value] = b;
             }
-            PS = PS with { Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+            PS = PS with { Z = b == 0, V = (b >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Rotate Left
@@ -820,7 +825,7 @@ namespace CPU
                 _ = addr ?? throw new NullReferenceException();
                 _memory[addr.Value] = b;
             }
-            PS = PS with { C = (res & (1 << 8)) == 1 << 8, Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+            PS = PS with { C = (res >> 8 & 1) == 1, Z = b == 0, V = (b >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Rotate Right
@@ -848,7 +853,7 @@ namespace CPU
 
             PS = PS with { C = (b & 1) == 1 };
             res = (b >> 1) + (PS.C ? 1 << 7 : 0);
-            b = (byte)(res % 0x0100);
+            b = (byte)(res & 0xFF);
             if (instruction == Cpu6502ByteCodesInstructions.ROR_ACCUMULATOR)
                 A.Value = b;
             else
@@ -856,7 +861,7 @@ namespace CPU
                 _ = addr ?? throw new NullReferenceException();
                 _memory[addr.Value] = b;
             }
-            PS = PS with { Z = b == 0, V = (b & (1 << 7)) == 1 << 7 };
+            PS = PS with { Z = b == 0, V = (b >> 7 & 1) == 1 };
         }
         #endregion
 
@@ -1049,7 +1054,7 @@ namespace CPU
         ushort ReadZeroPageAddrFromMemory(byte offset = 0) => ComputeAddrFromUL(_memory[PC++], 0, offset);
         ushort ReadAddrFromMemory(byte offset = 0) => ComputeAddrFromUL(_memory[PC++], _memory[PC++], offset);
 
-        static ushort ComputeAddrFromUL(byte lower, byte upper, byte offset = 0) => (ushort)(upper * (byte.MaxValue + 1) + lower + offset);
+        static ushort ComputeAddrFromUL(byte lower, byte upper, byte offset = 0) => (ushort)(((upper << 8) | lower) + offset);
         ushort GetNmiAddress() => ComputeAddrFromUL(_memory[Cpu6502Consts.NMI_ADDRESS_L], _memory[Cpu6502Consts.NMI_ADDRESS_U]);
         ushort GetResetAddress() => ComputeAddrFromUL(_memory[Cpu6502Consts.RESET_ADDRESS_L], _memory[Cpu6502Consts.RESET_ADDRESS_U]);
         ushort GetBrkAddress() => ComputeAddrFromUL(_memory[Cpu6502Consts.BRK_ADDRESS_L], _memory[Cpu6502Consts.BRK_ADDRESS_U]);
@@ -1089,13 +1094,13 @@ namespace CPU
         public static implicit operator byte(ProcessorStatus ps) => (byte)((ps.C ? 64 : 0) + (ps.Z ? 32 : 0) + (ps.I ? 16 : 0) + (ps.D ? 8 : 0) + (ps.B ? 4 : 0) + (ps.V ? 2 : 0) + (ps.N ? 1 : 0));
         public static implicit operator ProcessorStatus(byte b) => new()
         {
-            N = (b & (1 << 0)) == (1 << 0),
-            V = (b & (1 << 1)) == (1 << 1),
-            B = (b & (1 << 2)) == (1 << 2),
-            D = (b & (1 << 3)) == (1 << 3),
-            I = (b & (1 << 4)) == (1 << 4),
-            Z = (b & (1 << 5)) == (1 << 5),
-            C = (b & (1 << 6)) == (1 << 6),
+            N = (b >> 0 & 1) == 1,
+            V = (b >> 1 & 1) == 1,
+            B = (b >> 2 & 1) == 1,
+            D = (b >> 3 & 1) == 1,
+            I = (b >> 4 & 1) == 1,
+            Z = (b >> 5 & 1) == 1,
+            C = (b >> 6 & 1) == 1,
         };
     }
 
@@ -1118,23 +1123,23 @@ namespace CPU
         public void LoadValueFromAddress(ushort address)
         {
             Value = CPU._memory[address];
-            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
+            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value >> 7 & 1) == 1 };
         }
         public void WriteValueToAddress(ushort address) => CPU._memory[address] = Value;
         public void TransferValueToRegister(Register r)
         {
             r.Value = Value;
-            CPU.PS = CPU.PS with { Z = r.Value == 0, N = (r.Value & (1 << 7)) == (1 << 7) };
+            CPU.PS = CPU.PS with { Z = r.Value == 0, N = (r.Value >> 7 & 1) == 1 };
         }
         public void Increment()
         {
             Value++;
-            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
+            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value >> 7 & 1) == 1 };
         }
         public void Decrement()
         {
             Value--;
-            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value & (1 << 7)) == (1 << 7) };
+            CPU.PS = CPU.PS with { Z = Value == 0, N = (Value >> 7 & 1) == 1 };
         }
     }
 }
