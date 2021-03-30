@@ -9,7 +9,8 @@ namespace CPUConsole
         {
             var memory = Cpu6502Compiler.Compile("main.s");
 
-            var cpu = new Cpu6502(memory);
+            var memManager = new MemoryManager(memory);
+            var cpu = new Cpu6502(memManager);
             cpu.Reset();
         }
     }
