@@ -573,11 +573,10 @@ namespace CPU
             };
             var b = _memory[addr];
             var res = A.Value + b + (PS.C ? 1 : 0);
-            PS = PS with { C = res > 0xFF, V = byte.MaxValue < res };
+            PS = PS with { C = res > 0xFF, V = (A.Value ^ b >> 7 & 1) == 0 && (A.Value ^ res >> 7 & 1) == 1 };
             
             A.Value = (byte)(res & 0xFF);
             PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1 };
-            throw new NotImplementedException();
         }
         /// <summary>
         /// Substract with Carry
@@ -601,10 +600,10 @@ namespace CPU
             };
             var b = _memory[addr];
             var res = A.Value - b - (PS.C ? 0 : 1);
-            A.Value = (byte)(res & 0xFF);
+            PS = PS with { C = res <= 0xFF, V = (A.Value ^ b >> 7 & 1) == 1 && (A.Value ^ res >> 7 & 1) == 1 };
 
-            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1, V = res <= byte.MaxValue };
-            throw new NotImplementedException();
+            A.Value = (byte)(res & 0xFF);
+            PS = PS with { Z = A.Value == 0, N = (A.Value >> 7 & 1) == 1 };
         }
         /// <summary>
         /// Compare Accumulator
