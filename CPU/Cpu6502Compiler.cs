@@ -821,6 +821,14 @@ namespace CPU
 
             return compiler.GetByteCodes();
         }
+        public static void CompileAndSaveAs(string inFilepath, string outFilepath)
+        {
+            using var compiler = new Cpu6502Compiler(inFilepath);
+            compiler.CompileLines();
+
+            var bytes = compiler.GetByteCodes();
+            File.WriteAllBytes(outFilepath, bytes);
+        }
 
         public void Dispose()
         {
