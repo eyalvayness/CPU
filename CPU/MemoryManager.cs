@@ -8,7 +8,8 @@ namespace CPU
 {
     public interface IMemoryObserver
     {
-        bool IsInRangeofObservation(int address);
+        Range ObervationRange { get; }
+        //bool IsInRangeofObservation(int address);
         void IsReadingAt(int address);
         void IsWritingAt(int address, byte val);
     }
