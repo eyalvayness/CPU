@@ -6,22 +6,22 @@ using System.Threading.Tasks;
 
 namespace CPU
 {
-    public interface IMemoryReadObserver
+    public interface IMemoryObserver
     {
-        bool IsInRangeOfReadObservation(int address);
+        bool IsInRangeofObservation(int address);
         void IsReadingAt(int address);
+        void IsWritingAt(int address, byte val);
     }
-    public interface IMemoryWriteObserver
-    {
-        bool IsInRangeOfWriteObservation(int address);
-        void IsWritingAt(int address);
-    }
-    public interface IMemoryObserver : IMemoryReadObserver, IMemoryWriteObserver
-    { }
 
     public class MemoryManager
     {
         readonly byte[] _memory;
+
+        public byte this[int address]
+        {
+            get => ReadAt(address);
+            set => WriteAt(address, value);
+        }
 
         public MemoryManager(int size)
         {
