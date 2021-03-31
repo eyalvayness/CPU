@@ -9,10 +9,13 @@ namespace CPU
 {
     public class Cpu6502Compiler : IDisposable
     {
+        record FillableLink(string Name, long Position, int Size);
+
         bool _disposed;
         readonly MemoryStream _writer;
         readonly Reader _reader;
         readonly Dictionary<string, ushort> _links;
+        readonly List<FillableLink> _fillableLinks;
 
         Cpu6502Compiler(string inFilepath)
         {
@@ -20,6 +23,7 @@ namespace CPU
             _reader = new Reader(inFilepath);
             _writer = new MemoryStream(new byte[ushort.MaxValue + 1]);
             _links = new();
+            _fillableLinks = new();
         }
         ~Cpu6502Compiler() => Dispose(false);
 
@@ -27,6 +31,18 @@ namespace CPU
         {
             while (!_reader.EOS)
                 CompileLine();
+
+            foreach (var fl in _fillableLinks)
+            {
+                var value = _links[fl.Name];
+                _writer.Seek(fl.Position, SeekOrigin.Begin);
+                for (int i = 0; i < fl.Size; i++)
+                {
+                    byte b = (byte)(value & 0xFF);
+                    _writer.WriteByte(b);
+                    value = (ushort)(value >> 8);
+                }
+            }
         }
 
         void CompileLine()
@@ -46,8 +62,9 @@ namespace CPU
                 var eq = _reader.GetRawString();
                 if (!eq.Contains('='))
                     throw new NotImplementedException();
-                var vt = _reader.GetValue(_links, out var s);
-                _links.Add(v, s);
+                var vt = _reader.GetValue(out var s, out var ln);
+                var val = s ?? throw new NullReferenceException();
+                _links.Add(v, val);
             }
             else
                 _links.Add(_reader.GetWord(), (ushort)_writer.Position);
@@ -68,17 +85,23 @@ namespace CPU
         void CompileASMInstruction()
         {
             string instruction = _reader.GetWord();
+            ushort? value;
+            string? linkName;
             switch (instruction)
             {
                 case "org":
-                    var offset = _reader.GetUInt16(_links);
+                    _reader.GetUInt16(out value, out linkName);
+                    var offset = value ?? throw new NullReferenceException();
                     _writer.Seek(offset, SeekOrigin.Begin);
                     break;
                 case "word":
-                    var value = _reader.GetUInt16(_links);
-                    _writer.WriteByte((byte)(value & 0b11111111));
-                    value = (ushort)(value >> 8);
-                    _writer.WriteByte((byte)(value & 0b11111111));
+                    _reader.GetUInt16(out value, out linkName);
+                    if (value == null && linkName != null)
+                        _fillableLinks.Add(new(linkName, _writer.Position, 2));
+                    var word = value ?? 0;
+                    _writer.WriteByte((byte)(word & 0xFF));
+                    word = (ushort)(word >> 8);
+                    _writer.WriteByte((byte)(word & 0xFF));
                     break;
                 case "asciiz":
                     var s = _reader.GetExplicitString() + (char)0;
@@ -230,7 +253,11 @@ namespace CPU
         #region Load Operations
         void WriteLDA() // Load Accumulator
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.LDA_IMMEDIATE,
@@ -244,16 +271,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteLDX() // Load X Register
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.LDX_IMMEDIATE,
@@ -264,16 +300,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteLDY() // Load Y Register
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.LDY_IMMEDIATE,
@@ -284,19 +329,28 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Store Operations
         void WriteSTA() // Store Accumulator
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.STA_ZEROPAGE,
@@ -309,16 +363,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteSTX() // Store X Register
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.STX_ZEROPAGE,
@@ -327,16 +390,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteSTY() // Store Y Register
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.STY_ZEROPAGE,
@@ -345,19 +417,28 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Logical
         void WriteAND() // Logical AND
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.AND_IMMEDIATE,
@@ -371,16 +452,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteEOR() // Exclusive OR
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.EOR_IMMEDIATE,
@@ -394,16 +484,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteORA() // Logical Inclusive OR
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.ORA_IMMEDIATE,
@@ -417,16 +516,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBIT() // Bit Test
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.BIT_ZEROPAGE,
@@ -434,19 +542,28 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Arithmetic
         void WriteADC() // Add with Carry
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.ADC_IMMEDIATE,
@@ -460,16 +577,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteSBC() // Substract with Carry
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.SBC_IMMEDIATE,
@@ -483,16 +609,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteCMP() // Compare Accumulator
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.CMP_IMMEDIATE,
@@ -506,16 +641,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteCPX() // Compare X Register
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.CPX_IMMEDIATE,
@@ -524,16 +668,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteCPY() // Compare Y Register
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Immediate => Cpu6502ByteCodesInstructions.CPY_IMMEDIATE,
@@ -542,19 +695,28 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Increments & Decrements
         void WriteINC() // Increment a Memory Location
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.INC_ZEROPAGE,
@@ -564,16 +726,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteDEC() // Decrement a Memory Location
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.ZeroPage  => Cpu6502ByteCodesInstructions.DEC_ZEROPAGE,
@@ -583,19 +754,28 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Shifts
         void WriteASL() // Arithmetic Shift Left
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.ASL_ACCUMULATOR,
@@ -606,16 +786,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteLSR() // Logical Shift Right
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.LSR_ACCUMULATOR,
@@ -626,16 +815,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteROL() // Rotate Left
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.ROL_ACCUMULATOR,
@@ -646,16 +844,25 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteROR() // Rotate Right
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.A         => Cpu6502ByteCodesInstructions.ROR_ACCUMULATOR,
@@ -666,19 +873,28 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
             if (vt.HasFlag(Reader.ValueTypes.Absolute))
             {
+                fl = fl with { Size = fl.Size + 1 };
                 s = (ushort)(s >> 8);
-                _writer.WriteByte((byte)(s & 0b11111111));
+                _writer.WriteByte((byte)(s & 0xFF));
             }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Jumps & Calls
         void WriteJMP() // Jump to Another Location
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.JMP_ABSOLUTE,
@@ -686,129 +902,245 @@ namespace CPU
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteJSR() // Jump to a Subroutine
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.JSR_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
         #region Branches
         void WriteBCC() // Branch if Carry Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BCC_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBCS() // Branch if Carry Flag Set
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BCS_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBEQ() // Branch if Zero Flag Set
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BEQ_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBMI() // Branch if Negative Flag Set
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BMI_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBNE() // Branch if Zero Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BNE_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBPL() // Branch if Negative Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BPL_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBVC() // Branch if Overflow Flag Clear
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BVC_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         void WriteBVS() // Branch if Overflow Flag Set
         {
-            var vt = _reader.GetValue(_links, out var s);
+            FillableLink fl = new("", 0, 1);
+            var vt = _reader.GetValue(out var nullableS, out var ln);
+            if (ln != null)
+                fl = fl with { Name = ln };
+            var s = nullableS ?? 0;
             var bc = vt switch
             {
                 Reader.ValueTypes.Absolute => Cpu6502ByteCodesInstructions.BVS_ABSOLUTE,
                 _ => throw new NotImplementedException(),
             };
             _writer.WriteByte(bc);
-            _writer.WriteByte((byte)(s & 0b11111111));
-            s = (ushort)(s >> 8);
-            _writer.WriteByte((byte)(s & 0b11111111));
+
+            fl = fl with { Position = _writer.Position };
+            _writer.WriteByte((byte)(s & 0xFF));
+            if (vt.HasFlag(Reader.ValueTypes.Absolute))
+            {
+                fl = fl with { Size = fl.Size + 1 };
+                s = (ushort)(s >> 8);
+                _writer.WriteByte((byte)(s & 0xFF));
+            }
+            if (nullableS == null && ln != null)
+                _fillableLinks.Add(fl);
         }
         #endregion
 
@@ -918,41 +1250,53 @@ namespace CPU
 
                 return sb.ToString();
             }
-            public ushort GetUInt16(Dictionary<string, ushort> links)
+            public void GetUInt16(out ushort? value, out string? linkName)
             {
+                linkName = null;
+                value = null;
                 var s = GetRawString();
-                if (links.ContainsKey(s))
-                    return links[s];
+                int ba = 10;
+                var isLink = s.All(char.IsLetter);
+                if (isLink)
+                {
+                    linkName = s;
+                    return;
+                }
                 if (!char.IsDigit(s[0]))
                 {
-                    var b = s[0] switch
+                    ba = s[0] switch
                     {
                         '$' => 16,
                         '%' => 2,
-                        _ => throw new NotFiniteNumberException()
+                        _ => throw new NotImplementedException()
                     };
                     s = s[1..];
-                    return Convert.ToUInt16(s, b);
                 }
-                return ushort.Parse(s);
+                value = Convert.ToUInt16(s, ba);
             }
-            public byte GetByte(Dictionary<string, ushort> links)
+            public void GetByte(out byte? value, out string? linkName)
             {
+                linkName = null;
+                value = null;
                 var s = GetRawString();
-                if (links.ContainsKey(s))
-                    return (byte)links[s];
+                int ba = 10;
+                var isLink = s.All(char.IsLetter);
+                if (isLink)
+                {
+                    linkName = s;
+                    return;
+                }
                 if (!char.IsDigit(s[0]))
                 {
-                    var b = s[0] switch
+                    ba = s[0] switch
                     {
                         '$' => 16,
                         '%' => 2,
                         _ => throw new NotFiniteNumberException()
                     };
                     s = s[1..];
-                    return Convert.ToByte(s, b);
                 }
-                return byte.Parse(s);
+                value = Convert.ToByte(s, ba);
             }
 
             [Flags] public enum ValueTypes
@@ -978,10 +1322,11 @@ namespace CPU
                 IndirectY = Indirect | Y,
             }
 
-            public ValueTypes GetValue(Dictionary<string, ushort> links, out ushort s)
+            public ValueTypes GetValue(out ushort? s, out string? linkName)
             {
                 ValueTypes vt = ValueTypes.None;
-                s = 0;
+                s = null;
+                linkName = null;
                 int ba = 10;
                 var str = GetRawString();
                 if (str == "a")
@@ -1008,7 +1353,12 @@ namespace CPU
                         _ => throw new NotImplementedException()
                     };
                 }
-                if (!links.ContainsKey(str) && !char.IsDigit(str[0]))
+                bool isLink = str.All(char.IsLetter);
+                if (isLink)
+                {
+                    linkName = str;
+                }
+                if (!isLink && !char.IsDigit(str[0]))
                 {
                     ba = str[0] switch
                     {
@@ -1018,7 +1368,8 @@ namespace CPU
                     };
                     str = str[1..];
                 }
-                s = links.ContainsKey(str) ? links[str] : Convert.ToUInt16(str, ba);
+                if (!isLink)
+                    s = Convert.ToUInt16(str, ba);
 
                 if (s <= byte.MaxValue)
                 {

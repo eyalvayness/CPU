@@ -1,11 +1,5 @@
 OUT = $6000
 
-	.org $7000
-message:
-	.asciiz "Hello, world!"
-loop:
-	jmp loop
-
 	.org $8000
 reset:
 	ldx #$ff
@@ -18,6 +12,11 @@ print:
 	sta OUT
 	inx
 	jmp print
+
+message:
+	.asciiz "Hello, world!"
+loop:
+	jmp loop
 
 	.org $fffc
 	.word reset
