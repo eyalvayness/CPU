@@ -12,9 +12,7 @@ namespace CPUConsole
         public Range ObervationRange => new(0x6000, 0x6001);
 
         public void IsReadingAt(int address)
-        {
-            throw new NotImplementedException();
-        }
+        { }
 
         public void IsWritingAt(int address, byte val)
         {

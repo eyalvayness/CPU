@@ -9,7 +9,6 @@ namespace CPU
     public interface IMemoryObserver
     {
         Range ObervationRange { get; }
-        //bool IsInRangeofObservation(int address);
         void IsReadingAt(int address);
         void IsWritingAt(int address, byte val);
     }
@@ -34,7 +33,17 @@ namespace CPU
         }
 
         public void RegisterObserver(IMemoryObserver observer) => _observers.Add(observer);
-        public void RegisterObservers(params IMemoryObserver[] observers) => _observers.AddRange(observers);
+        public void RegisterObservers(params IMemoryObserver[] observers)
+        {
+            foreach (var obs in observers)
+                RegisterObserver(obs);
+        }
+        public void UnregisterObserver(IMemoryObserver observer) => _observers.Remove(observer);
+        public void UnregisterObservers(params IMemoryObserver[] observers)
+        {
+            foreach (var obs in observers)
+                UnregisterObserver(obs);
+        }
 
         public void WriteAt(int address, byte b)
         {
