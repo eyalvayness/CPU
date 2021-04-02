@@ -12,9 +12,10 @@ print:
 	sta OUT
 	inx
 	jmp print
-
+	
 message:
 	.asciiz "Hello, world!"
+
 loop:
 	jmp loop
 

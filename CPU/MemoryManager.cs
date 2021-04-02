@@ -17,7 +17,7 @@ namespace CPU
     public class MemoryManager
     {
         readonly byte[] _memory;
-        List<IMemoryObserver> _observers;
+        readonly List<IMemoryObserver> _observers;
 
         public byte this[int address]
         {
@@ -38,24 +38,22 @@ namespace CPU
 
         public void WriteAt(int address, byte b)
         {
-            _observers.Where(obs =>
-            {
-                var (offset, length) = obs.ObervationRange.GetOffsetAndLength(_memory.Length);
-                return offset <= address && address < offset + length;
-            }).ToList().ForEach(obs => obs.IsWritingAt(address, b));
-
             _memory[address] = b;
+            
+            _observers.Where(obs => CheckIfIsInRange(obs, address)).ToList().ForEach(obs => obs.IsWritingAt(address, b));
         }
 
         public byte ReadAt(int address)
         {
-            _observers.Where(obs =>
-            {
-                var (offset, length) = obs.ObervationRange.GetOffsetAndLength(_memory.Length);
-                return offset <= address && address <= offset + length;
-            }).ToList().ForEach(obs => obs.IsReadingAt(address));
+            _observers.Where(obs => CheckIfIsInRange(obs, address)).ToList().ForEach(obs => obs.IsReadingAt(address));
 
             return _memory[address];
+        }
+
+        bool CheckIfIsInRange(IMemoryObserver obs, int address)
+        {
+            var (offset, length) = obs.ObervationRange.GetOffsetAndLength(_memory.Length);
+            return offset <= address && address <= offset + length;
         }
     }
 }
